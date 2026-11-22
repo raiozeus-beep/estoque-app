@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Estoque</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#6b7380;--pri:#0f766e;--pri2:#ccfbf1;--red:#dc2626;--red2:#fee2e2;--amb:#b45309;--amb2:#fef3c7;--grn:#15803d;--grn2:#dcfce7;--bd:#e3e6ea}
+@media(prefers-color-scheme:dark){:root{--bg:#111418;--card:#1a1f25;--tx:#eef0f3;--mut:#9aa3af;--pri:#2dd4bf;--pri2:#0f3a36;--red:#f87171;--red2:#3b1717;--amb:#fbbf24;--amb2:#3a2d0c;--grn:#4ade80;--grn2:#12301c;--bd:#2a313a}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:15px;display:flex;flex-direction:column}
+header{padding:calc(env(safe-area-inset-top) + 12px) 16px 10px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:space-between}
+@media(prefers-color-scheme:dark){header{background:#0f3a36;color:#eef0f3}}
+header h1{font-size:18px;margin:0;font-weight:650}
+main{flex:1;overflow-y:auto;padding:14px 14px 90px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;color:var(--mut);padding:9px 0 8px;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button .i{font-size:20px;line-height:1}
+nav button.on{color:var(--pri);font-weight:650}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.kpi small{color:var(--mut);display:block;font-size:12px}
+.kpi b{font-size:19px;display:block;margin-top:3px}
+.kpi.warn{background:var(--amb2)}.kpi.bad{background:var(--red2)}.kpi.ok{background:var(--grn2)}
+h2{font-size:14px;margin:16px 2px 8px;color:var(--mut);font-weight:650;text-transform:uppercase;letter-spacing:.03em}
+.row{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.p{padding:11px 12px;background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:8px}
+.p .n{font-weight:600}.p .s{color:var(--mut);font-size:12.5px;margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--grn2);color:var(--grn)}.b-low{background:var(--amb2);color:var(--amb)}.b-zero{background:var(--red2);color:var(--red)}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
+label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:10px;padding:12px 14px;background:var(--pri);color:#fff;font:inherit;font-weight:600;width:100%}
+@media(prefers-color-scheme:dark){.btn{color:#04201d}}
+.btn.sec{background:var(--pri2);color:var(--pri)}.btn.red{background:var(--red2);color:var(--red)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.fab{position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:10}
+#sheet.on{display:flex}
+#sheet .in{background:var(--bg);width:100%;max-height:92%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+#sheet h3{margin:0 0 4px;font-size:17px}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:8px 0;padding-bottom:2px}
+.chip{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;white-space:nowrap;font-size:13px}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+@media(prefers-color-scheme:dark){.chip.on{color:#04201d}}
+.pos{color:var(--grn)}.neg{color:var(--red)}.mut{color:var(--mut)}
+.empty{text-align:center;color:var(--mut);padding:30px 10px}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;display:none;z-index:20;max-width:90%}
+.bar{height:8px;border-radius:4px;background:var(--pri2);overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--pri)}
+</style>
+</head>
+<body>
+<header><h1 id="title">Estoque</h1><span id="hdr" style="opacity:.8;font-size:13px"></span></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+<div id="sheet"><div class="in" id="sheetIn"></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+var KEY = 'estoque_v2';
+var UNITS = ['un', 'kg', 'g', 'L', 'ml', 'cx', 'pct', 'm'];
+var TYPES = {
+  entrada: {label: 'Entrada (compra)', short: 'Entradas'},
+  saida:   {label: 'Saída', short: 'Saídas'},
+  perda:   {label: 'Perda / quebra / vencido', short: 'Perdas'},
+  ajuste:  {label: 'Ajuste de contagem', short: 'Ajustes'}
+};
+
+function load() {
+  try {
+    var d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.products) && Array.isArray(d.moves)) return d;
+  } catch (e) {}
+  return {products: [], moves: []};
+}
+var db = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('Erro ao salvar os dados'); }
+}
+
+var S = {tab: 'home', q: '', cat: '', period: '30', hist: ''};
+
+/* ---------- utilidades ---------- */
+function $(id) { return document.getElementById(id); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+  });
+}
+function numIn(v) {
+  var n = parseFloat(String(v == null ? '' : v).trim().replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+function money(v) { return (v || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
+function qtyFmt(v) { return (Math.round((v || 0) * 1000) / 1000).toLocaleString('pt-BR'); }
+function pct(v) { return (Math.round(v * 10) / 10).toLocaleString('pt-BR') + '%'; }
+function dt(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+}
+function dShort(iso) { return new Date(iso).toLocaleDateString('pt-BR'); }
+function toast(msg) {
+  var t = $('toast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toast.h);
+  toast.h = setTimeout(function () { t.style.display = 'none'; }, 2200);
+}
+function prod(id) { return db.products.filter(function (p) { return p.id === id; })[0]; }
+function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+function startOf(days) {
+  if (days === 'all') return 0;
+  if (days === '0') { var d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  return Date.now() - Number(days) * 86400000;
+}
+function status(p) {
+  if (p.stock <= 0) return 'zero';
+  if (p.min > 0 && p.stock <= p.min) return 'low';
+  return 'ok';
+}
+function badge(p) {
+  var s = status(p);
+  if (s === 'zero') return '<span class="badge b-zero">Sem estoque</span>';
+  if (s === 'low') return '<span class="badge b-low">Repor · ' + qtyFmt(p.stock) + ' ' + esc(p.unit) + '</span>';
+  return '<span class="badge b-ok">' + qtyFmt(p.stock) + ' ' + esc(p.unit) + '</span>';
+}
+function entries(pid) {
+  return db.moves.filter(function (m) { return m.pid === pid && m.type === 'entrada' && m.unitCost > 0; });
+}
+function recalcLast(p) {
+  var e = entries(p.id);
+  if (e.length) p.lastCost = e[e.length - 1].unitCost;
+}
+
+/* ---------- navegação ---------- */
+var TABS = [
+  ['home', '🏠', 'Início'],
+  ['prod', '📦', 'Produtos'],
+  ['mov', '🔁', 'Movimentar'],
+  ['hist', '🧾', 'Histórico'],
+  ['rep', '📊', 'Relatórios']
+];
+function go(t) { S.tab = t; render(); $('main').scrollTop = 0; }
+function renderNav() {
+  $('nav').innerHTML = TABS.map(function (t) {
+    return '<button class="' + (S.tab === t[0] ? 'on' : '') + '" onclick="go(\'' + t[0] + '\')"><span class="i">' + t[1] + '</span>' + t[2] + '</button>';
+  }).join('');
+}
+function render() {
+  renderNav();
+  var titles = {home: 'Resumo', prod: 'Produtos', mov: 'Movimentar estoque', hist: 'Histórico', rep: 'Relatórios'};
+  $('title').textContent = titles[S.tab];
+  $('hdr').textContent = db.products.length + ' produtos';
+  var fn = {home: vHome, prod: vProd, mov: vMov, hist: vHist, rep: vRep}[S.tab];
+  $('main').innerHTML = fn();
+}
+
+/* ---------- INÍCIO ---------- */
+function vHome() {
+  var low = 0, zero = 0, total = 0;
+  db.products.forEach(function (p) {
+    var s = status(p); if (s === 'low') low++; if (s === 'zero') zero++;
+    if (p.stock > 0) total += p.stock * p.lastCost;
+  });
+  var t30 = startOf('30'), compras = 0;
+  db.moves.forEach(function (m) {
+    if (m.type === 'entrada' && new Date(m.date).getTime() >= t30) compras += m.qty * m.unitCost;
+  });
+  var alerts = db.products.filter(function (p) { return status(p) !== 'ok'; })
+    .sort(function (a, b) { return a.stock - b.stock; }).slice(0, 10);
+
+  var h = '<div class="grid">' +
+    '<div class="kpi ' + (low ? 'warn' : '') + '"><small>Para repor</small><b>' + low + '</b></div>' +
+    '<div class="kpi ' + (zero ? 'bad' : '') + '"><small>Sem estoque</small><b>' + zero + '</b></div>' +
+    '<div class="kpi"><small>Compras (30 dias)</small><b>' + money(compras) + '</b></div>' +
+    '<div class="kpi"><small>Valor em estoque (preço de compra)</small><b>' + money(total) + '</b></div></div>';
+
+  h += '<div class="btns"><button class="btn" onclick="openMove(\'entrada\')">Registrar entrada</button>' +
+       '<button class="btn sec" onclick="openMove(\'saida\')">Registrar saída</button></div>';
+
+  h += '<h2>Precisa de atenção</h2>';
+  if (!db.products.length) {
+    h += '<div class="empty">Nenhum produto ainda.<br>Toque em <b>Produtos</b> para cadastrar o primeiro.</div>';
+  } else if (!alerts.length) {
+    h += '<div class="empty">Tudo certo, nenhum produto abaixo do mínimo.</div>';
+  } else {
+    h += alerts.map(function (p) {
+      return '<div class="p" onclick="openProd(\'' + p.id + '\')"><div class="row"><div style="min-width:0"><div class="n">' + esc(p.name) +
+        '</div><div class="s">Mínimo ' + qtyFmt(p.min) + ' ' + esc(p.unit) + (p.supplier ? ' · ' + esc(p.supplier) : '') + '</div></div>' + badge(p) + '</div></div>';
+    }).join('');
+  }
+  var exp = db.products.filter(function (p) { return p.expiry && p.stock > 0 && daysTo(p.expiry) <= 15; })
+    .sort(function (a, b) { return a.expiry < b.expiry ? -1 : 1; }).slice(0, 8);
+  if (exp.length) {
+    h += '<h2>Validade próxima</h2>' + exp.map(function (p) {
+      var d = daysTo(p.expiry);
+      return '<div class="p" onclick="openProd(\'' + p.id + '\')"><div class="row"><div><div class="n">' + esc(p.name) +
+        '</div><div class="s">' + qtyFmt(p.stock) + ' ' + esc(p.unit) + ' em estoque</div></div><span class="badge ' + (d < 0 ? 'b-zero' : 'b-low') + '">' +
+        (d < 0 ? 'Vencido' : d === 0 ? 'Vence hoje' : d + ' dias') + '</span></div></div>';
+    }).join('');
+  }
+  return h;
+}
+function daysTo(iso) {
+  var a = new Date(iso + 'T00:00:00'), b = new Date(); b.setHours(0, 0, 0, 0);
+  return Math.round((a - b) / 86400000);
+}
+
+/* ---------- PRODUTOS ---------- */
+function cats() {
+  var m = {};
+  db.products.forEach(function (p) { if (p.cat) m[p.cat] = 1; });
+  return Object.keys(m).sort();
+}
+function suppliers() {
+  var m = {};
+  db.products.forEach(function (p) { if (p.supplier) m[p.supplier] = 1; });
+  db.moves.forEach(function (x) { if (x.supplier) m[x.supplier] = 1; });
+  return Object.keys(m).sort();
+}
+function setQ(v) {
+  S.q = v;
+  var pos = $('q') ? $('q').selectionStart : 0;
+  render();
+  var el = $('q');
+  if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
+}
+function setCat(c) { S.cat = c; render(); }
+function listProducts() {
+  var q = norm(S.q);
+  return db.products.filter(function (p) {
+    if (S.cat && p.cat !== S.cat) return false;
+    if (!q) return true;
+    return norm(p.name + ' ' + p.code + ' ' + p.cat + ' ' + p.supplier).indexOf(q) >= 0;
+  }).sort(function (a, b) { return norm(a.name) < norm(b.name) ? -1 : 1; });
+}
+function vProd() {
+  var cs = cats();
+  var h = '<input id="q" type="search" placeholder="Buscar por nome, código ou fornecedor" value="' + esc(S.q) + '" oninput="setQ(this.value)">';
+  if (cs.length) {
+    h += '<div class="chips"><button class="chip ' + (!S.cat ? 'on' : '') + '" onclick="setCat(\'\')">Todas</button>' +
+      cs.map(function (c) { return '<button class="chip ' + (S.cat === c ? 'on' : '') + '" data-c="' + esc(c) + '" onclick="setCat(this.dataset.c)">' + esc(c) + '</button>'; }).join('') + '</div>';
+  }
+  var list = listProducts();
+  if (!list.length) {
+    h += '<div class="empty">' + (db.products.length ? 'Nada encontrado.' : 'Nenhum produto cadastrado.<br>Toque no <b>+</b> para começar.') + '</div>';
+  } else {
+    h += list.map(function (p) {
+      return '<div class="p" onclick="openProd(\'' + p.id + '\')"><div class="row"><div style="min-width:0"><div class="n">' + esc(p.name) +
+        '</div><div class="s">' + (p.code ? esc(p.code) + ' · ' : '') + 'Compra: ' + money(p.lastCost) + '</div></div>' + badge(p) + '</div></div>';
+    }).join('');
+  }
+  return h + '<button class="fab" onclick="editProd()">+</button>';
+}
+
+/* ficha do produto */
+function openProd(id) {
+  var p = prod(id); if (!p) return;
+  var en = entries(id);
+  var prev = en.length > 1 ? en[en.length - 2].unitCost : 0;
+  var var_ = prev > 0 ? ((p.lastCost - prev) / prev * 100) : null;
+  var mv = db.moves.filter(function (m) { return m.pid === id; }).slice(-5).reverse();
+  var h = '<h3>' + esc(p.name) + '</h3><div class="mut" style="margin-bottom:8px">' + (p.code ? esc(p.code) + ' · ' : '') + esc(p.cat || 'Sem categoria') + (p.supplier ? ' · ' + esc(p.supplier) : '') + '</div>' +
+    '<div class="grid"><div class="kpi"><small>Em estoque</small><b>' + qtyFmt(p.stock) + ' ' + esc(p.unit) + '</b></div>' +
+    '<div class="kpi"><small>Estoque mínimo</small><b>' + qtyFmt(p.min) + '</b></div>' +
+    '<div class="kpi"><small>Preço de compra (atual)</small><b>' + money(p.lastCost) + '</b></div>' +
+    '<div class="kpi"><small>Compra anterior</small><b>' + (prev ? money(prev) : '—') + '</b>' +
+    (var_ !== null && var_ !== 0 ? '<small class="' + (var_ > 0 ? 'neg' : 'pos') + '">' + (var_ > 0 ? '▲ ' : '▼ ') + pct(Math.abs(var_)) + '</small>' : '') + '</div></div>';
+  if (p.expiry) h += '<div class="mut" style="margin-bottom:8px">Validade: ' + new Date(p.expiry + 'T00:00:00').toLocaleDateString('pt-BR') + '</div>';
+  h += '<div class="btns"><button class="btn" onclick="openMove(\'entrada\',\'' + id + '\')">Entrada</button>' +
+       '<button class="btn sec" onclick="openMove(\'saida\',\'' + id + '\')">Saída</button>' +
+       '<button class="btn sec" onclick="openMove(\'ajuste\',\'' + id + '\')">Ajustar contagem</button>' +
+       '<button class="btn sec" onclick="openMove(\'perda\',\'' + id + '\')">Perda</button></div>';
+  h += '<button class="btn sec" onclick="editProd(\'' + id + '\')" style="margin-bottom:8px">Editar produto</button>';
+  if (en.length) {
+    h += '<h2>Histórico de preço de compra</h2>' + en.slice(-5).reverse().map(function (m) {
+      return '<div class="p"><div class="row"><div><div class="n">' + money(m.unitCost) + '</div><div class="s">' + dShort(m.date) + (m.supplier ? ' · ' + esc(m.supplier) : '') + '</div></div><span class="mut">' + qtyFmt(m.qty) + ' ' + esc(p.unit) + '</span></div></div>';
+    }).join('');
+  }
+  if (mv.length) h += '<h2>Últimas movimentações</h2>' + mv.map(function (m) { return movRow(m, false); }).join('');
+  openSheet(h);
+}
+
+function editProd(id) {
+  var p = id ? prod(id) : {name: '', code: '', cat: '', unit: 'un', supplier: '', lastCost: 0, min: 0, stock: 0, expiry: ''};
+  var h = '<h3>' + (id ? 'Editar produto' : 'Novo produto') + '</h3>' +
+    '<label>Nome *</label><input id="f_name" value="' + esc(p.name) + '">' +
+    '<div class="two"><div><label>Código / barras</label><input id="f_code" value="' + esc(p.code) + '"></div>' +
+    '<div><label>Unidade</label><select id="f_unit">' + UNITS.map(function (u) { return '<option' + (u === p.unit ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></div></div>' +
+    '<div class="two"><div><label>Categoria</label><input id="f_cat" list="dl_cat" value="' + esc(p.cat) + '"></div>' +
+    '<div><label>Fornecedor</label><input id="f_sup" list="dl_sup" value="' + esc(p.supplier) + '"></div></div>' +
+    '<datalist id="dl_cat">' + cats().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+    '<datalist id="dl_sup">' + suppliers().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+    '<div class="two"><div><label>Preço de compra (R$)</label><input id="f_cost" inputmode="decimal" value="' + (p.lastCost || '') + '"></div>' +
+    '<div><label>Estoque mínimo</label><input id="f_min" inputmode="decimal" value="' + (p.min || '') + '"></div></div>' +
+    '<label>' + (id ? 'Estoque atual (use "Ajustar contagem" para mudar)' : 'Estoque inicial') + '</label><input id="f_stock" inputmode="decimal" value="' + (p.stock || '') + '"' + (id ? ' disabled' : '') + '>' +
+    '<label>Validade (opcional)</label><input id="f_exp" type="date" value="' + esc(p.expiry) + '">' +
+    '<div style="height:12px"></div><button class="btn" onclick="saveProd(\'' + (id || '') + '\')">Salvar</button>';
+  if (id) h += '<div style="height:8px"></div><button class="btn red" onclick="delProd(\'' + id + '\')">Excluir produto</button>';
+  openSheet(h);
+}
+function saveProd(id) {
+  var name = $('f_name').value.trim();
+  if (!name) { toast('Informe o nome do produto'); return; }
+  var code = $('f_code').value.trim();
+  if (code && db.products.some(function (x) { return x.code === code && x.id !== id; })) { toast('Já existe produto com este código'); return; }
+  var cost = numIn($('f_cost').value);
+  var p;
+  if (id) { p = prod(id); }
+  else {
+    p = {id: uid(), lastCost: 0, stock: 0, created: new Date().toISOString()};
+    db.products.push(p);
+  }
+  p.name = name; p.code = code; p.unit = $('f_unit').value;
+  p.cat = $('f_cat').value.trim(); p.supplier = $('f_sup').value.trim();
+  p.min = numIn($('f_min').value); p.expiry = $('f_exp').value;
+  p.lastCost = cost;
+  if (!id) {
+    var st = numIn($('f_stock').value);
+    if (st > 0) {
+      p.stock = st;
+      db.moves.push({id: uid(), date: new Date().toISOString(), pid: p.id, type: 'entrada', qty: st, unitCost: cost, supplier: p.supplier, note: 'Estoque inicial', costSnap: cost});
+    }
+  }
+  save(); closeSheet(); render(); toast('Produto salvo');
+}
+function delProd(id) {
+  var p = prod(id);
+  if (!confirm('Excluir "' + p.name + '"? O histórico de movimentações dele também será apagado.')) return;
+  db.products = db.products.filter(function (x) { return x.id !== id; });
+  db.moves = db.moves.filter(function (m) { return m.pid !== id; });
+  save(); closeSheet(); render(); toast('Produto excluído');
+}
+
+/* ---------- MOVIMENTAR ---------- */
+function vMov() {
+  return '<div class="card"><b>O que você quer registrar?</b><div class="mut" style="margin-top:4px">Escolha o tipo e depois o produto.</div></div>' +
+    '<div class="btns" style="grid-template-columns:1fr">' +
+    '<button class="btn" onclick="openMove(\'entrada\')">Entrada de mercadoria (compra)</button>' +
+    '<button class="btn sec" onclick="openMove(\'saida\')">Saída</button>' +
+    '<button class="btn sec" onclick="openMove(\'perda\')">Perda / quebra / vencido</button>' +
+    '<button class="btn sec" onclick="openMove(\'ajuste\')">Ajuste de contagem (inventário)</button></div>';
+}
+var sheetType = '';
+function openMove(type, pid) {
+  if (!db.products.length) { toast('Cadastre um produto primeiro'); go('prod'); return; }
+  closeSheet();
+  var opts = db.products.slice().sort(function (a, b) { return norm(a.name) < norm(b.name) ? -1 : 1; });
+  var h = '<h3>' + TYPES[type].label + '</h3>' +
+    '<label>Produto</label><input id="m_q" type="search" placeholder="Filtrar produto ou código" oninput="filterMoveProducts()">' +
+    '<select id="m_p" onchange="moveFill()" style="margin-top:6px">' +
+    opts.map(function (p) { return '<option value="' + p.id + '"' + (p.id === pid ? ' selected' : '') + '>' + esc(p.name) + (p.code ? ' (' + esc(p.code) + ')' : '') + '</option>'; }).join('') + '</select>' +
+    '<div id="m_info" class="mut" style="margin:6px 2px"></div>' +
+    '<label>' + (type === 'ajuste' ? 'Quantidade contada (real)' : 'Quantidade') + '</label><input id="m_qty" inputmode="decimal" oninput="moveTotal()">';
+  if (type === 'entrada') {
+    h += '<div class="two"><div><label>Preço de compra (R$)</label><input id="m_cost" inputmode="decimal" oninput="moveTotal()"></div>' +
+         '<div><label>Fornecedor</label><input id="m_sup" list="dl_sup2"></div></div>' +
+         '<datalist id="dl_sup2">' + suppliers().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>';
+  }
+  h += '<label>Observação (opcional)</label><input id="m_note">' +
+       '<div id="m_total" class="card" style="margin-top:12px;display:none"></div>' +
+       '<button class="btn" style="margin-top:12px" onclick="saveMove(\'' + type + '\')">Confirmar</button>';
+  openSheet(h);
+  sheetType = type;
+  moveFill();
+}
+function filterMoveProducts() {
+  var q = norm($('m_q').value), sel = $('m_p'), first = null;
+  for (var i = 0; i < sel.options.length; i++) {
+    var p = prod(sel.options[i].value);
+    var ok = !q || norm(p.name + ' ' + p.code).indexOf(q) >= 0;
+    sel.options[i].hidden = !ok; sel.options[i].disabled = !ok;
+    if (ok && !first) first = sel.options[i];
+  }
+  if (first && sel.selectedOptions[0] && sel.selectedOptions[0].disabled) sel.value = first.value;
+  moveFill();
+}
+function moveFill() {
+  var p = prod($('m_p').value); if (!p) return;
+  $('m_info').innerHTML = 'Em estoque: <b>' + qtyFmt(p.stock) + ' ' + esc(p.unit) + '</b> · Último preço de compra ' + money(p.lastCost);
+  if ($('m_cost')) $('m_cost').value = p.lastCost || '';
+  if ($('m_sup')) $('m_sup').value = p.supplier || '';
+  moveTotal();
+}
+function moveTotal() {
+  var box = $('m_total'); if (!box) return;
+  var p = prod($('m_p').value); if (!p) return;
+  var q = numIn($('m_qty').value), h = '';
+  if (sheetType === 'entrada') {
+    var c = numIn($('m_cost').value);
+    h = 'Total da compra: <b>' + money(q * c) + '</b>';
+    if (c > 0 && p.lastCost > 0 && c !== p.lastCost) {
+      var v = (c - p.lastCost) / p.lastCost * 100;
+      h += '<br><span class="' + (v > 0 ? 'neg' : 'pos') + '">' + (v > 0 ? '▲ ' : '▼ ') + pct(Math.abs(v)) + ' em relação ao último preço de compra</span>';
+    }
+    if (q > 0) h += '<br>Estoque ficará em <b>' + qtyFmt(p.stock + q) + ' ' + esc(p.unit) + '</b>';
+  } else if (sheetType === 'ajuste') {
+    if ($('m_qty').value.trim() !== '') {
+      var diff = q - p.stock;
+      h = 'Diferença: <b class="' + (diff >= 0 ? 'pos' : 'neg') + '">' + (diff > 0 ? '+' : '') + qtyFmt(diff) + ' ' + esc(p.unit) + '</b>';
+    }
+  } else if (q > 0) {
+    h = 'Estoque ficará em <b>' + qtyFmt(p.stock - q) + ' ' + esc(p.unit) + '</b>';
+    if (sheetType === 'perda') h += '<br>Valor perdido (preço de compra): <b class="neg">' + money(q * p.lastCost) + '</b>';
+  }
+  box.innerHTML = h; box.style.display = h ? 'block' : 'none';
+}
+function saveMove(type) {
+  var p = prod($('m_p').value); if (!p) return;
+  var q = numIn($('m_qty').value);
+  var m = {id: uid(), date: new Date().toISOString(), pid: p.id, type: type, qty: 0, unitCost: 0, supplier: '', note: $('m_note').value.trim(), costSnap: p.lastCost};
+  if (type === 'ajuste') {
+    if ($('m_qty').value.trim() === '' || q < 0) { toast('Informe a quantidade contada'); return; }
+    var diff = q - p.stock;
+    if (diff === 0) { toast('Contagem igual ao estoque, nada a ajustar'); return; }
+    m.qty = diff;
+  } else {
+    if (q <= 0) { toast('Informe a quantidade'); return; }
+    if (type === 'entrada') {
+      m.qty = q; m.unitCost = numIn($('m_cost').value); m.supplier = $('m_sup').value.trim();
+      if (m.unitCost > 0) { p.lastCost = m.unitCost; m.costSnap = m.unitCost; }
+      if (m.supplier) p.supplier = m.supplier;
+    } else {
+      if (q > p.stock && !confirm('Só há ' + qtyFmt(p.stock) + ' ' + p.unit + ' em estoque. Continuar mesmo assim?')) return;
+      m.qty = -q;
+    }
+  }
+  p.stock = Math.round((p.stock + m.qty) * 1000) / 1000;
+  db.moves.push(m); save(); closeSheet(); render(); toast('Registrado');
+}
+
+/* ---------- HISTÓRICO ---------- */
+function movRow(m, withUndo) {
+  var p = prod(m.pid), T = TYPES[m.type] || {label: m.type};
+  var extra = '';
+  if (m.type === 'entrada' && m.unitCost) extra = ' · ' + money(m.unitCost) + '/' + esc(p ? p.unit : 'un') + (m.supplier ? ' · ' + esc(m.supplier) : '');
+  return '<div class="p"><div class="row"><div style="min-width:0"><div class="n">' + esc(p ? p.name : '(produto removido)') + '</div>' +
+    '<div class="s">' + T.label + extra + '<br>' + dt(m.date) + (m.note ? ' · ' + esc(m.note) : '') + '</div></div>' +
+    '<b class="' + (m.qty >= 0 ? 'pos' : 'neg') + '">' + (m.qty > 0 ? '+' : '') + qtyFmt(m.qty) + '</b></div>' +
+    (withUndo ? '<button class="chip" style="margin-top:8px" onclick="undoMove(\'' + m.id + '\')">Desfazer</button>' : '') + '</div>';
+}
+function setHist(v) { S.hist = v; render(); }
+function vHist() {
+  var h = '<div class="chips"><button class="chip ' + (!S.hist ? 'on' : '') + '" onclick="setHist(\'\')">Todas</button>' +
+    Object.keys(TYPES).map(function (k) { return '<button class="chip ' + (S.hist === k ? 'on' : '') + '" onclick="setHist(\'' + k + '\')">' + TYPES[k].short + '</button>'; }).join('') + '</div>';
+  var list = db.moves.filter(function (m) { return !S.hist || m.type === S.hist; }).slice().reverse().slice(0, 150);
+  if (!list.length) return h + '<div class="empty">Nenhuma movimentação.</div>';
+  h += list.map(function (m) { return movRow(m, true); }).join('');
+  return h + '<div class="mut" style="text-align:center;margin:8px">Mostrando as últimas 150 movimentações</div>';
+}
+function undoMove(id) {
+  var m = db.moves.filter(function (x) { return x.id === id; })[0]; if (!m) return;
+  if (!confirm('Desfazer esta movimentação? O estoque do produto será corrigido.')) return;
+  var p = prod(m.pid);
+  db.moves = db.moves.filter(function (x) { return x.id !== id; });
+  if (p) {
+    p.stock = Math.round((p.stock - m.qty) * 1000) / 1000;
+    if (m.type === 'entrada') recalcLast(p);
+  }
+  save(); render(); toast('Movimentação desfeita');
+}
+
+/* ---------- RELATÓRIOS ---------- */
+function setPeriod(v) { S.period = v; render(); }
+function vRep() {
+  var from = startOf(S.period);
+  var ms = db.moves.filter(function (m) { return new Date(m.date).getTime() >= from; });
+  var compras = 0, nEnt = 0, perdas = 0, bySup = {};
+  ms.forEach(function (m) {
+    if (m.type === 'entrada') {
+      var v = m.qty * m.unitCost; compras += v; nEnt++;
+      var k = m.supplier || 'Sem fornecedor'; bySup[k] = (bySup[k] || 0) + v;
+    }
+    if (m.type === 'perda') perdas += Math.abs(m.qty) * m.costSnap;
+  });
+  var labels = [['0', 'Hoje'], ['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias'], ['all', 'Tudo']];
+  var h = '<div class="chips">' + labels.map(function (l) { return '<button class="chip ' + (S.period === l[0] ? 'on' : '') + '" onclick="setPeriod(\'' + l[0] + '\')">' + l[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="grid"><div class="kpi"><small>Total comprado</small><b>' + money(compras) + '</b></div>' +
+    '<div class="kpi"><small>Nº de entradas</small><b>' + nEnt + '</b></div>' +
+    '<div class="kpi ' + (perdas ? 'bad' : '') + '"><small>Perdas (a preço de compra)</small><b>' + money(perdas) + '</b></div></div>';
+
+  var sups = Object.keys(bySup).sort(function (a, b) { return bySup[b] - bySup[a]; });
+  h += '<h2>Compras por fornecedor</h2>';
+  if (!sups.length) h += '<div class="empty">Sem compras no período.</div>';
+  else {
+    var top = bySup[sups[0]] || 1;
+    h += sups.slice(0, 10).map(function (s) {
+      return '<div class="p"><div class="row"><div class="n">' + esc(s) + '</div><b>' + money(bySup[s]) + '</b></div><div class="bar"><i style="width:' + Math.max(3, bySup[s] / top * 100) + '%"></i></div></div>';
+    }).join('');
+  }
+
+  /* variação do preço de compra: últimas duas compras de cada produto */
+  var vars = [];
+  db.products.forEach(function (p) {
+    var e = entries(p.id);
+    if (e.length > 1) {
+      var a = e[e.length - 2].unitCost, b = e[e.length - 1].unitCost;
+      if (a > 0 && a !== b) vars.push({p: p, a: a, b: b, v: (b - a) / a * 100});
+    }
+  });
+  vars.sort(function (x, y) { return Math.abs(y.v) - Math.abs(x.v); });
+  h += '<h2>Variação do preço de compra</h2>';
+  h += vars.length ? vars.slice(0, 8).map(function (x) {
+    return '<div class="p" onclick="openProd(\'' + x.p.id + '\')"><div class="row"><div><div class="n">' + esc(x.p.name) + '</div><div class="s">' + money(x.a) + ' → ' + money(x.b) + '</div></div>' +
+      '<b class="' + (x.v > 0 ? 'neg' : 'pos') + '">' + (x.v > 0 ? '▲ ' : '▼ ') + pct(Math.abs(x.v)) + '</b></div></div>';
+  }).join('') : '<div class="empty">Sem variações. Registre mais de uma compra do mesmo produto.</div>';
+
+  /* parados: sem saída há 60+ dias */
+  var cut = Date.now() - 60 * 86400000, lastOut = {};
+  db.moves.forEach(function (m) { if (m.type === 'saida') lastOut[m.pid] = Math.max(lastOut[m.pid] || 0, new Date(m.date).getTime()); });
+  var parados = db.products.filter(function (p) { return p.stock > 0 && (lastOut[p.id] || 0) < cut && new Date(p.created || 0).getTime() < cut; })
+    .sort(function (a, b) { return b.stock * b.lastCost - a.stock * a.lastCost; }).slice(0, 8);
+  h += '<h2>Sem saída há 60+ dias</h2>';
+  h += parados.length ? parados.map(function (p) {
+    return '<div class="p" onclick="openProd(\'' + p.id + '\')"><div class="row"><div class="n">' + esc(p.name) + '</div><b>' + qtyFmt(p.stock) + ' ' + esc(p.unit) + '</b></div><div class="s">Parado: ' + money(p.stock * p.lastCost) + ' a preço de compra</div></div>';
+  }).join('') : '<div class="empty">Nenhum produto parado.</div>';
+
+  h += '<h2>Lista de compras</h2><button class="btn sec" onclick="shopList()">Gerar lista de reposição</button>';
+  h += '<h2>Dados</h2><div class="btns"><button class="btn sec" onclick="exportCSV(\'estoque\')">Exportar estoque (CSV)</button>' +
+    '<button class="btn sec" onclick="exportCSV(\'mov\')">Exportar histórico (CSV)</button>' +
+    '<button class="btn sec" onclick="backup()">Fazer backup</button>' +
+    '<button class="btn sec" onclick="restoreSheet()">Restaurar backup</button></div>';
+  return h;
+}
+function shopList() {
+  var list = db.products.filter(function (p) { return p.min > 0 && p.stock <= p.min; })
+    .sort(function (a, b) { return norm(a.supplier) < norm(b.supplier) ? -1 : 1; });
+  if (!list.length) { toast('Nada para repor'); return; }
+  var txt = 'Lista de reposição - ' + new Date().toLocaleDateString('pt-BR') + '\n', sup = null, tot = 0;
+  list.forEach(function (p) {
+    if ((p.supplier || 'Sem fornecedor') !== sup) { sup = p.supplier || 'Sem fornecedor'; txt += '\n' + sup + '\n'; }
+    var need = Math.max(1, Math.ceil(p.min * 2 - p.stock));
+    tot += need * p.lastCost;
+    txt += '- ' + p.name + ': ' + qtyFmt(need) + ' ' + p.unit + ' (estoque ' + qtyFmt(p.stock) + ', mín. ' + qtyFmt(p.min) + ', últ. compra ' + money(p.lastCost) + ')\n';
+  });
+  txt += '\nCusto estimado: ' + money(tot) + '\n(sugestão: repor até 2x o estoque mínimo)';
+  shareText('reposicao.txt', txt);
+}
+
+/* ---------- exportar / backup ---------- */
+function csvCell(v) { v = String(v == null ? '' : v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function exportCSV(kind) {
+  var rows;
+  if (kind === 'estoque') {
+    rows = [['Produto', 'Codigo', 'Categoria', 'Fornecedor', 'Unidade', 'Estoque', 'Minimo', 'Preco de compra', 'Validade']];
+    db.products.forEach(function (p) { rows.push([p.name, p.code, p.cat, p.supplier, p.unit, p.stock, p.min, p.lastCost.toFixed(2), p.expiry]); });
+  } else {
+    rows = [['Data', 'Tipo', 'Produto', 'Quantidade', 'Preco de compra', 'Fornecedor', 'Obs']];
+    db.moves.forEach(function (m) { var p = prod(m.pid); rows.push([dt(m.date), m.type, p ? p.name : '', m.qty, m.unitCost || '', m.supplier, m.note]); });
+  }
+  var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(';'); }).join('\n');
+  shareText(kind + '.csv', csv);
+}
+function backup() { shareText('backup-estoque-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(db)); }
+function shareText(name, text) {
+  if (window.Android && Android.share) { Android.share(name, text); return; }
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+function restoreSheet() {
+  openSheet('<h3>Restaurar backup</h3><div class="mut">Cole abaixo o conteúdo do arquivo de backup (.json). Isso substitui todos os dados atuais.</div>' +
+    '<textarea id="r_txt" rows="8" style="margin-top:10px"></textarea><div style="height:10px"></div><button class="btn" onclick="restore()">Restaurar</button>');
+}
+function restore() {
+  try {
+    var d = JSON.parse($('r_txt').value);
+    if (!d || !Array.isArray(d.products) || !Array.isArray(d.moves)) throw 0;
+    if (!confirm('Substituir todos os dados atuais pelo backup?')) return;
+    db = d; save(); closeSheet(); render(); toast('Backup restaurado');
+  } catch (e) { toast('Backup inválido'); }
+}
+
+/* ---------- folha (modal) e botão voltar ---------- */
+function openSheet(h) { $('sheetIn').innerHTML = h; $('sheet').classList.add('on'); $('sheetIn').scrollTop = 0; }
+function closeSheet() { $('sheet').classList.remove('on'); }
+$('sheet').addEventListener('click', function (e) { if (e.target === this) closeSheet(); });
+window.handleBack = function () {
+  if ($('sheet').classList.contains('on')) { closeSheet(); return true; }
+  if (S.tab !== 'home') { go('home'); return true; }
+  return false;
+};
+
+render();
+</script>
+</body>
+</html>
